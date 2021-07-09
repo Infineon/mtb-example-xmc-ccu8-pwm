@@ -2,11 +2,9 @@
 
 This code example demonstrates how to generate PWM signals using Capture and Compare unit (CCU8) slices available in XMC™ MCU.
 
-The code example uses two CCU8 slices. One slice is configured in symmetric compare mode and other one is configured in asymmetric compare mode.
-
 ## Requirements
 
-- [ModusToolbox® software](https://www.cypress.com/products/modustoolbox-software-environment) v2.3
+- [ModusToolbox&trade; software](https://www.cypress.com/products/modustoolbox-software-environment) v2.3
 - [SEGGER J-Link software](https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack)
 - Programming Language: C
 - Associated Parts: All [XMC™ MCU](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/) parts
@@ -106,13 +104,25 @@ Various CLI tools include a `-h` option that prints help information to the term
 
    PWM Output GPIO Pins
 
-   -XMC1400 boot kit - P4.0 and P4.2
-  
-   -XMC4700 Relax kit - P5.8 and P5.9
+   -XMC1400 Boot Kit - P4.0 and P4.2
+
+   -XMC4700 Relax Kit - P5.8 and P5.9
+
 
 ## Debugging
 
 You can debug the example to step through the code. In the IDE, use the **\<Application Name> Debug (JLink)** configuration in the **Quick Panel**. For more details, see the "Program and Debug" section in the [Eclipse IDE for ModusToolbox User Guide](https://www.cypress.com/MTBEclipseIDEUserGuide).
+
+## Design and Implementation
+
+The code consists of three parts as follows:
+
+- **Part 1:** Defines the PWM output GPIO pins and slices for the symmetric and asymmetric PWM output. Afterward, the slices are configured and their configurations are saved in the `ccu80_slice_sym_pwm_config` and `ccu80_slice_asym_pwm_config` structures.
+  The difference in these structures is only the activation of  the `asymmetric_pwm` parameter in the `ccu80_slice_asym_pwm_config` structure. In addition, the PWM interrupt handler  is defined: the `IRQ26_Handler()` function for the XMC1400 Boot Kit and `CCU80_0_IRQHandler` for the XMC4700 Relax Kit. This interrupt handler increments the number after each period match event of the symmetric slice, and serves as a delay function in the main function.
+
+- **Part 2:** Initializes the slices with the configurations defined in Part 1. The interrupt event is enabled for the symmetric PWM slice. Concluding symmetric and asymmetric timers are started before entering in the endless loop.
+
+- **Part 3:** Updates the compare values for both symmetric and asymmetric PWM slices after every 20 period match interrupts (interrupt handler function) of the symmetric PWM slice using the `XMC_CCU8_SLICE_SetTimerCompareMatch()` and  `XMC_CCU8_EnableShadowTransfer()` functions. The compare value defines the duty cycle of the PWM; it gets incremented by `PWM_COMPAREVAL_UPDATE_STEP` in the endless `for` loop. When the duty cycle value is incremented, the LED brightness increases.
 
 ## Related Resources
 
@@ -145,13 +155,14 @@ Document Title: *CE232586* - *XMC MCU: CCU8 PWM*
 | Version | Description of Change |
 | ------- | --------------------- |
 | 1.0.0   | New code example      |
+| 1.0.1   | Updated README        |
 ------
 
 All other trademarks or registered trademarks referenced herein are the property of their respective owners.
 
 ![banner](images/ifx_logo_rgb.jpg)
 
-© 2021 Infineon Technologies AG
+© 2020-2021 Infineon Technologies AG
 
 All Rights Reserved.
 
