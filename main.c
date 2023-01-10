@@ -40,8 +40,6 @@
 #include "cybsp.h"
 #include "cy_utils.h"
 #include "cy_retarget_io.h"
-#include "xmc_scu.h"
-#include "xmc_ccu8.h"
 
 /*******************************************************************************
 * Macros
@@ -50,40 +48,62 @@
 #define PWM_INTERRUPT_MAX_COUNT                         50U
 #define PWM_PERIOD                                      65000U
 
-#if (UC_SERIES == XMC14)
-#define CCU8_MODULE_PTR                                CCU81
-#define SYMMETRIC_PWM_SLICE_PTR                        CCU81_CC81
-#define ASYMMETRIC_PWM_SLICE_PTR                       CCU81_CC82
-#define MODULE_NUMBER                                  (1U)
-#define SYMMETRIC_PWM_SLICE_NUMBER                     (1U)
-#define ASYMMETRIC_PWM_SLICE_NUMBER                    (2U)
-#define SYMMETRIC_PWM_OUTPUT_GPIO_PORT                 (XMC_GPIO_PORT_t *) PORT4_BASE
-#define SYMMETRIC_PWM_OUTPUT_GPIO_PIN                  0U
-#define ASYMMETRIC_PWM_OUTPUT_GPIO_PORT                (XMC_GPIO_PORT_t *) PORT4_BASE
-#define ASYMMETRIC_PWM_OUTPUT_GPIO_PIN                 2U
-#define SYMMETRIC_PWM_SHADOW_TRANSFER_MASK             XMC_CCU8_SHADOW_TRANSFER_SLICE_1
-#define ASYMMETRIC_PWM_SHADOW_TRANSFER_MASK            XMC_CCU8_SHADOW_TRANSFER_SLICE_2
-#define SYMMETRIC_PWM_PERIOD_MATCH_IRQn                IRQ26_IRQn
-#define SYMMETRIC_PWM_PERIOD_MATCH_IRQn_PRIORITY       3U
-#define SYMMETRIC_PWM_SLICE_SR_ID                      XMC_CCU8_SLICE_SR_ID_1
+#if (UC_SERIES == XMC14) || (UC_SERIES == XMC43)
+#define SYMMETRIC_PWM_SLICE_PERIOD_MATCH_EVENT_IRQN     CCU8_MODULE_SR1_IRQN
+#define SYMMETRIC_PWM_SLICE_PERIOD_MATCH_EVENT_HANDLER  CCU8_MODULE_SR1_INTERRUPT_HANDLER
+#else
+#define SYMMETRIC_PWM_SLICE_PERIOD_MATCH_EVENT_IRQN     CCU8_MODULE_SR0_IRQN
+#define SYMMETRIC_PWM_SLICE_PERIOD_MATCH_EVENT_HANDLER  CCU8_MODULE_SR0_INTERRUPT_HANDLER
 #endif
 
-#if (UC_SERIES == XMC47)
-#define CCU8_MODULE_PTR                                CCU80
-#define SYMMETRIC_PWM_SLICE_PTR                        CCU80_CC80
-#define ASYMMETRIC_PWM_SLICE_PTR                       CCU80_CC82
-#define MODULE_NUMBER                                  (0U)
-#define SYMMETRIC_PWM_SLICE_NUMBER                     (0U)
-#define ASYMMETRIC_PWM_SLICE_NUMBER                    (2U)
-#define SYMMETRIC_PWM_OUTPUT_GPIO_PORT                 (XMC_GPIO_PORT_t *) PORT5_BASE
-#define SYMMETRIC_PWM_OUTPUT_GPIO_PIN                  8U
-#define ASYMMETRIC_PWM_OUTPUT_GPIO_PORT                (XMC_GPIO_PORT_t *) PORT5_BASE
-#define ASYMMETRIC_PWM_OUTPUT_GPIO_PIN                 9U
-#define SYMMETRIC_PWM_SHADOW_TRANSFER_MASK             XMC_CCU8_SHADOW_TRANSFER_SLICE_0
-#define ASYMMETRIC_PWM_SHADOW_TRANSFER_MASK            XMC_CCU8_SHADOW_TRANSFER_SLICE_2
-#define SYMMETRIC_PWM_PERIOD_MATCH_IRQn                CCU80_0_IRQn
-#define SYMMETRIC_PWM_PERIOD_MATCH_IRQn_PRIORITY       10U
-#define SYMMETRIC_PWM_SLICE_SR_ID                      XMC_CCU8_SLICE_SR_ID_0
+#if (UC_SERIES == XMC13)
+#define SYMMETRIC_PWM_SHADOW_TRANSFER_MASK              XMC_CCU8_SHADOW_TRANSFER_SLICE_0 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_DITHER_SLICE_0 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_PRESCALER_SLICE_0
+#define ASYMMETRIC_PWM_SHADOW_TRANSFER_MASK             XMC_CCU8_SHADOW_TRANSFER_SLICE_2 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_DITHER_SLICE_2 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_PRESCALER_SLICE_2
+#define SYMMETRIC_PWM_PERIOD_MATCH_IRQn_PRIORITY        3U
+#endif
+
+#if (UC_SERIES == XMC14)
+#define SYMMETRIC_PWM_SHADOW_TRANSFER_MASK              XMC_CCU8_SHADOW_TRANSFER_SLICE_1 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_DITHER_SLICE_1 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_PRESCALER_SLICE_1
+#define ASYMMETRIC_PWM_SHADOW_TRANSFER_MASK             XMC_CCU8_SHADOW_TRANSFER_SLICE_2 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_DITHER_SLICE_2 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_PRESCALER_SLICE_2
+#define SYMMETRIC_PWM_PERIOD_MATCH_IRQn_PRIORITY        3U
+#endif
+
+#if (UC_SERIES == XMC42) || (UC_SERIES == XMC44) || (UC_SERIES == XMC45)
+#define SYMMETRIC_PWM_SHADOW_TRANSFER_MASK              XMC_CCU8_SHADOW_TRANSFER_SLICE_2 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_DITHER_SLICE_2 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_PRESCALER_SLICE_2
+#define ASYMMETRIC_PWM_SHADOW_TRANSFER_MASK             XMC_CCU8_SHADOW_TRANSFER_SLICE_3 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_DITHER_SLICE_3 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_PRESCALER_SLICE_3
+#define SYMMETRIC_PWM_PERIOD_MATCH_IRQn_PRIORITY        10U
+#endif
+
+#if (UC_SERIES == XMC43)
+#define SYMMETRIC_PWM_SHADOW_TRANSFER_MASK              XMC_CCU8_SHADOW_TRANSFER_SLICE_1 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_DITHER_SLICE_1 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_PRESCALER_SLICE_1
+#define ASYMMETRIC_PWM_SHADOW_TRANSFER_MASK             XMC_CCU8_SHADOW_TRANSFER_SLICE_3 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_DITHER_SLICE_3 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_PRESCALER_SLICE_3
+#define SYMMETRIC_PWM_PERIOD_MATCH_IRQn_PRIORITY        10U
+#endif
+
+#if (UC_SERIES == XMC47) || (UC_SERIES == XMC48)
+#define SYMMETRIC_PWM_SHADOW_TRANSFER_MASK              XMC_CCU8_SHADOW_TRANSFER_SLICE_0 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_DITHER_SLICE_0 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_PRESCALER_SLICE_0
+#define ASYMMETRIC_PWM_SHADOW_TRANSFER_MASK             XMC_CCU8_SHADOW_TRANSFER_SLICE_2 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_DITHER_SLICE_2 | \
+                                                        XMC_CCU8_SHADOW_TRANSFER_PRESCALER_SLICE_2
+#define SYMMETRIC_PWM_PERIOD_MATCH_IRQn_PRIORITY        10U
 #endif
 
 /* Define macro to enable/disable printing of debug messages */
@@ -105,129 +125,12 @@ static volatile bool interrupt_handler_flag = false;
 /* Interrupt counter */
 volatile uint32_t g_num_period_interrupts;
 
-/*
- * CCU8 slice configuration structure to generate symmetric PWM output
- */
-XMC_CCU8_SLICE_COMPARE_CONFIG_t ccu80_slice_sym_pwm_config =
+void SYMMETRIC_PWM_SLICE_PERIOD_MATCH_EVENT_HANDLER(void)
 {
-  .timer_mode          = XMC_CCU8_SLICE_TIMER_COUNT_MODE_CA,            /* Select center aligned mode of operation */
-  .monoshot            = XMC_CCU8_SLICE_TIMER_REPEAT_MODE_REPEAT,       /* Select continuous mode of operation */
-  .shadow_xfer_clear   = false,                                         /* Select PR and CR shadow xfer happen when timer is cleared */
-  .dither_timer_period = false,                                         /* Dithering not enabled */
-  .dither_duty_cycle   = false,                                         /* Dithering not enabled */
-  .prescaler_mode      = XMC_CCU8_SLICE_PRESCALER_MODE_NORMAL,          /* Set prescaler mode to normal */
-  .mcm_ch1_enable      = false,                                         /* Multi channel mode disabled for channel 1 */
-  .mcm_ch2_enable      = false,                                         /* Multi channel mode disabled for channel 2 */
-  .slice_status        = XMC_CCU8_SLICE_STATUS_CHANNEL_1,               /* Set the source for CCU8 slice status to channel 1 */
-  .passive_level_out0  = XMC_CCU8_SLICE_OUTPUT_PASSIVE_LEVEL_LOW,       /* Set passive level for CCU8 output (out0) to LOW */
-  .passive_level_out1  = XMC_CCU8_SLICE_OUTPUT_PASSIVE_LEVEL_LOW,       /* Set passive level for CCU8 output (out1) to LOW */
-  .passive_level_out2  = XMC_CCU8_SLICE_OUTPUT_PASSIVE_LEVEL_LOW,       /* Set passive level for CCU8 output (out2) to LOW */
-  .passive_level_out3  = XMC_CCU8_SLICE_OUTPUT_PASSIVE_LEVEL_LOW,       /* Set passive level for CCU8 output (out3) to LOW */
-  .asymmetric_pwm      = false,                                         /* Configuring CCU8 slice for symmetric PWM operation */
-#if !defined(CCU8V3)
-    .invert_out0       = false,                                         /* CCU8 status directly connected to out0 */
-    .invert_out1       = true,                                          /* CCU8 status inverted and connected to out1 */
-    .invert_out2       = false,                                         /* CCU8 status directly connected to out2 */
-    .invert_out3       = true,                                          /* CCU8 status inverted and connected to out3 */
-#else
-  .selector_out0       = XMC_CCU8_SOURCE_OUT0_ST1,                      /* CCU8 status directly connected to out0 */
-  .selector_out1       = XMC_CCU8_SOURCE_OUT1_INV_ST1,                  /* CCU8 status inverted and connected to out1 */
-  .selector_out2       = XMC_CCU8_SOURCE_OUT2_ST2,                      /* CCU8 status directly connected to out2 */
-  .selector_out3       = XMC_CCU8_SOURCE_OUT3_INV_ST2,                  /* CCU8 status inverted and connected to out3 */
-#endif
-  .prescaler_initval   = 1U,                                            /* Set prescaler initial value to 1 */
-  .float_limit         = 0U,                                            /* Setting float limit to 0 */
-  .dither_limit        = 0U,                                            /* Dithering not enabled */
-  .timer_concatenation = false                                          /* Timer concatenation disabled */
-};
-
-/*
- * CCU8 slice configuration structure to generate asymmetric PWM output
- */
-XMC_CCU8_SLICE_COMPARE_CONFIG_t ccu80_slice_asym_pwm_config =
-{
-  .timer_mode          = XMC_CCU8_SLICE_TIMER_COUNT_MODE_CA,            /* Select center aligned mode of operation */
-  .monoshot            = XMC_CCU8_SLICE_TIMER_REPEAT_MODE_REPEAT,       /* Select continuous mode of operation */
-  .shadow_xfer_clear   = false,                                         /* Select PR and CR shadow xfer happen when timer is cleared */
-  .dither_timer_period = false,                                         /* Dithering not enabled */
-  .dither_duty_cycle   = false,                                         /* Dithering not enabled */
-  .prescaler_mode      = XMC_CCU8_SLICE_PRESCALER_MODE_NORMAL,          /* Set prescaler mode to normal */
-  .mcm_ch1_enable      = false,                                         /* Multi channel mode disabled for channel 1 */
-  .mcm_ch2_enable      = false,                                         /* Multi channel mode disabled for channel 2 */
-  .slice_status        = XMC_CCU8_SLICE_STATUS_CHANNEL_1,               /* Set the source for CCU8 slice status to channel 1 */
-  .passive_level_out0  = XMC_CCU8_SLICE_OUTPUT_PASSIVE_LEVEL_LOW,       /* Set passive level for CCU8 output (out0) to LOW */
-  .passive_level_out1  = XMC_CCU8_SLICE_OUTPUT_PASSIVE_LEVEL_LOW,       /* Set passive level for CCU8 output (out1) to LOW */
-  .passive_level_out2  = XMC_CCU8_SLICE_OUTPUT_PASSIVE_LEVEL_LOW,       /* Set passive level for CCU8 output (out2) to LOW */
-  .passive_level_out3  = XMC_CCU8_SLICE_OUTPUT_PASSIVE_LEVEL_LOW,       /* Set passive level for CCU8 output (out3) to LOW */
-  .asymmetric_pwm      = true,                                          /* Configuring CCU8 slice for asymmetric PWM operation */
-#if !defined(CCU8V3)
-    .invert_out0       = false,                                         /* CCU8 status directly connected to out0 */
-    .invert_out1       = true,                                          /* CCU8 status inverted and connected to out1 */
-    .invert_out2       = false,                                         /* CCU8 status directly connected to out2 */
-    .invert_out3       = true,                                          /* CCU8 status inverted and connected to out3 */
-#else
-  .selector_out0       = XMC_CCU8_SOURCE_OUT0_ST1,                      /* CCU8 status directly connected to out0 */
-  .selector_out1       = XMC_CCU8_SOURCE_OUT1_INV_ST1,                  /* CCU8 status inverted and connected to out1 */
-  .selector_out2       = XMC_CCU8_SOURCE_OUT2_ST2,                      /* CCU8 status directly connected to out2 */
-  .selector_out3       = XMC_CCU8_SOURCE_OUT3_INV_ST2,                  /* CCU8 status inverted and connected to out3 */
-#endif
-  .prescaler_initval   = 0U,                                            /* Set prescaler initial value to 1 */
-  .float_limit         = 0U,                                            /* Setting float limit to 0 */
-  .dither_limit        = 0U,                                            /* Dithering not enabled */
-  .timer_concatenation = false                                          /* Timer concatenation disabled */
-};
-
-/*
- * GPIO configuration for PWM outputs (Symmetric and Asymmetric)
- */
-#if (UC_SERIES == XMC14)
-const XMC_GPIO_CONFIG_t  ccu8_symmetric_pwm_gpio_config    =
-{
-   .mode                = XMC_GPIO_MODE_OUTPUT_PUSH_PULL_ALT8,          /* Select alternate mode 8 to connect to CCU8 output */
-   .output_level        = XMC_GPIO_OUTPUT_LEVEL_LOW,                    /* Set initial output level LOW */
-   .input_hysteresis    = XMC_GPIO_INPUT_HYSTERESIS_STANDARD            /* Select standard hysteresis */
-};
-const XMC_GPIO_CONFIG_t  ccu8_asymmetric_pwm_gpio_config    =
-{
-   .mode                = XMC_GPIO_MODE_OUTPUT_PUSH_PULL_ALT3,          /* Select alternate mode 3 to connect to CCU8 output */
-   .output_level        = XMC_GPIO_OUTPUT_LEVEL_LOW,                    /* Set initial output level LOW */
-   .input_hysteresis    = XMC_GPIO_INPUT_HYSTERESIS_STANDARD            /* Select standard hysteresis */
-};
-#endif
-#if (UC_SERIES == XMC47)
-const XMC_GPIO_CONFIG_t  ccu8_symmetric_pwm_gpio_config    =
-{
-   .mode                = XMC_GPIO_MODE_OUTPUT_PUSH_PULL_ALT3,          /* Select alternate mode 3 to connect to CCU8 output */
-   .output_level        = XMC_GPIO_OUTPUT_LEVEL_LOW,                    /* Set initial output level LOW */
-   .output_strength     = XMC_GPIO_OUTPUT_STRENGTH_MEDIUM               /* Set output drive strength to medium */
-};
-const XMC_GPIO_CONFIG_t  ccu8_asymmetric_pwm_gpio_config    =
-{
-   .mode                = XMC_GPIO_MODE_OUTPUT_PUSH_PULL_ALT3,          /* Select alternate mode 3 to connect to CCU8 output */
-   .output_level        = XMC_GPIO_OUTPUT_LEVEL_LOW,                    /* Set initial output level LOW */
-   .output_strength     = XMC_GPIO_OUTPUT_STRENGTH_MEDIUM               /* Set output drive strength to medium */
-};
-
-#endif
-
-/* PWM Interrupt handler for KIT_XMC14_BOOT_001*/
-#if (UC_SERIES == XMC14)
-void IRQ26_Handler(void)
-{
-  g_num_period_interrupts++;
-  XMC_CCU8_SLICE_ClearEvent(SYMMETRIC_PWM_SLICE_PTR, XMC_CCU8_SLICE_IRQ_ID_PERIOD_MATCH);
+    g_num_period_interrupts++;
+    XMC_CCU8_SLICE_ClearEvent(SYMMETRIC_PWM_SLICE_HW, XMC_CCU8_SLICE_IRQ_ID_PERIOD_MATCH);
+    interrupt_handler_flag = true;
 }
-#endif
-
-/* PWM Interrupt handler for all XMC4000 kits*/
-#if (UC_SERIES == XMC47)
-void CCU80_0_IRQHandler(void)
-{
-  g_num_period_interrupts++;
-  XMC_CCU8_SLICE_ClearEvent(SYMMETRIC_PWM_SLICE_PTR, XMC_CCU8_SLICE_IRQ_ID_PERIOD_MATCH);
-}
-#endif
-
 
 /*******************************************************************************
 * Function Name: main
@@ -270,36 +173,6 @@ int main(void)
         CY_ASSERT(0);
     }
 
-    /* Ensure fCCU reaches CCU8 module */
-    XMC_CCU8_SetModuleClock(CCU8_MODULE_PTR, XMC_CCU8_CLOCK_SCU);
-
-    /* Initialize CCU8 module */
-    XMC_CCU8_Init(CCU8_MODULE_PTR, XMC_CCU8_SLICE_MCMS_ACTION_TRANSFER_PR_CR);
-
-    /* Start the prescaler and restore clocks to slices */
-    XMC_CCU8_StartPrescaler(CCU8_MODULE_PTR);
-
-     /* Get the slices out of idle mode */
-    XMC_CCU8_EnableClock(CCU8_MODULE_PTR, SYMMETRIC_PWM_SLICE_NUMBER);
-    XMC_CCU8_EnableClock(CCU8_MODULE_PTR, ASYMMETRIC_PWM_SLICE_NUMBER);
-
-    /* Initialize the Slices */
-    XMC_CCU8_SLICE_CompareInit(SYMMETRIC_PWM_SLICE_PTR, &ccu80_slice_sym_pwm_config);
-    XMC_CCU8_SLICE_CompareInit(ASYMMETRIC_PWM_SLICE_PTR, &ccu80_slice_asym_pwm_config);
-    /* Program timer period for both ccu8 slices */
-    XMC_CCU8_SLICE_SetTimerPeriodMatch(SYMMETRIC_PWM_SLICE_PTR, PWM_PERIOD);
-    XMC_CCU8_SLICE_SetTimerPeriodMatch(ASYMMETRIC_PWM_SLICE_PTR, PWM_PERIOD);
-    /* Program initial compare match value for symmetric pwm slice */
-    XMC_CCU8_SLICE_SetTimerCompareMatch(SYMMETRIC_PWM_SLICE_PTR, XMC_CCU8_SLICE_COMPARE_CHANNEL_1, pwm_compareVal);
-    /* Program initial compare match values (channel1 and channel2) for symmetric pwm slice */
-    XMC_CCU8_SLICE_SetTimerCompareMatch(ASYMMETRIC_PWM_SLICE_PTR, XMC_CCU8_SLICE_COMPARE_CHANNEL_1, pwm_compareVal);
-    XMC_CCU8_SLICE_SetTimerCompareMatch(ASYMMETRIC_PWM_SLICE_PTR, XMC_CCU8_SLICE_COMPARE_CHANNEL_2, pwm_compareVal);
-    /* Enable period match event for symmetric pwm slice*/
-    XMC_CCU8_SLICE_EnableEvent(SYMMETRIC_PWM_SLICE_PTR, XMC_CCU8_SLICE_IRQ_ID_PERIOD_MATCH);
-
-    /* Connect period match event to SR0 */
-    XMC_CCU8_SLICE_SetInterruptNode(SYMMETRIC_PWM_SLICE_PTR, XMC_CCU8_SLICE_IRQ_ID_PERIOD_MATCH, SYMMETRIC_PWM_SLICE_SR_ID);
-
     /* Initialize retarget-io to use the debug UART port */
     cy_retarget_io_init(CYBSP_DEBUG_UART_HW);
 
@@ -308,25 +181,14 @@ int main(void)
     #endif
 
     /* Set interrupt priority */
-    NVIC_SetPriority(SYMMETRIC_PWM_PERIOD_MATCH_IRQn, SYMMETRIC_PWM_PERIOD_MATCH_IRQn_PRIORITY);
+    NVIC_SetPriority(SYMMETRIC_PWM_SLICE_PERIOD_MATCH_EVENT_IRQN, SYMMETRIC_PWM_PERIOD_MATCH_IRQn_PRIORITY);
 
 #if (UC_SERIES == XMC14)
     /* Select interrupt source */
-    XMC_SCU_SetInterruptControl(SYMMETRIC_PWM_PERIOD_MATCH_IRQn, (XMC_SCU_IRQCTRL_t)((SYMMETRIC_PWM_PERIOD_MATCH_IRQn << 8) | 1U));
+    XMC_SCU_SetInterruptControl(SYMMETRIC_PWM_SLICE_PERIOD_MATCH_EVENT_IRQN, (XMC_SCU_IRQCTRL_t)((SYMMETRIC_PWM_SLICE_PERIOD_MATCH_EVENT_IRQN << 8) | 1U));
 #endif
     /* Enable interrupt */
-    NVIC_EnableIRQ(SYMMETRIC_PWM_PERIOD_MATCH_IRQn);
-
-    /* Configure GPIO output for the ccu8 slices */
-    XMC_GPIO_Init(SYMMETRIC_PWM_OUTPUT_GPIO_PORT, SYMMETRIC_PWM_OUTPUT_GPIO_PIN, &ccu8_symmetric_pwm_gpio_config);
-    XMC_GPIO_Init(ASYMMETRIC_PWM_OUTPUT_GPIO_PORT, ASYMMETRIC_PWM_OUTPUT_GPIO_PIN, &ccu8_asymmetric_pwm_gpio_config);
-    /* Enable shadow transfer */
-    XMC_CCU8_EnableShadowTransfer(CCU8_MODULE_PTR, SYMMETRIC_PWM_SHADOW_TRANSFER_MASK);
-    XMC_CCU8_EnableShadowTransfer(CCU8_MODULE_PTR, ASYMMETRIC_PWM_SHADOW_TRANSFER_MASK);
-
-    /* Start timers */
-    XMC_CCU8_SLICE_StartTimer(SYMMETRIC_PWM_SLICE_PTR);
-    XMC_CCU8_SLICE_StartTimer(ASYMMETRIC_PWM_SLICE_PTR);
+    NVIC_EnableIRQ(SYMMETRIC_PWM_SLICE_PERIOD_MATCH_EVENT_IRQN);
 
     for (;;)
     {
@@ -348,9 +210,9 @@ int main(void)
         /* Reset interrupt counter */
         g_num_period_interrupts = 0;
 
-        /* Update compare value for symmetric pwm */
-        XMC_CCU8_SLICE_SetTimerCompareMatch(SYMMETRIC_PWM_SLICE_PTR, XMC_CCU8_SLICE_COMPARE_CHANNEL_1, pwm_compareVal);
-        XMC_CCU8_EnableShadowTransfer(CCU8_MODULE_PTR, SYMMETRIC_PWM_SHADOW_TRANSFER_MASK);
+        /* Update compare value for symmetric PWM */
+        XMC_CCU8_SLICE_SetTimerCompareMatchChannel1(SYMMETRIC_PWM_SLICE_HW, pwm_compareVal);
+        XMC_CCU8_EnableShadowTransfer(CCU8_MODULE_HW, SYMMETRIC_PWM_SHADOW_TRANSFER_MASK);
 
         #if ENABLE_XMC_DEBUG_PRINT
         if (debug_loop_count == DEBUG_LOOP_COUNT_MAX)
@@ -359,11 +221,10 @@ int main(void)
         }
         #endif
 
-        /* Update compare value for asymmetric pwm channels */
-        XMC_CCU8_SLICE_SetTimerCompareMatch(ASYMMETRIC_PWM_SLICE_PTR, XMC_CCU8_SLICE_COMPARE_CHANNEL_1, pwm_compareVal);
-        XMC_CCU8_EnableShadowTransfer(CCU8_MODULE_PTR, ASYMMETRIC_PWM_SHADOW_TRANSFER_MASK);
-        XMC_CCU8_SLICE_SetTimerCompareMatch(ASYMMETRIC_PWM_SLICE_PTR, XMC_CCU8_SLICE_COMPARE_CHANNEL_2, pwm_compareVal);
-        XMC_CCU8_EnableShadowTransfer(CCU8_MODULE_PTR, ASYMMETRIC_PWM_SHADOW_TRANSFER_MASK);
+        /* Update compare value for asymmetric PWM channels */
+        XMC_CCU8_SLICE_SetTimerCompareMatchChannel1(ASYMMETRIC_PWM_SLICE_HW, pwm_compareVal);
+        XMC_CCU8_SLICE_SetTimerCompareMatchChannel2(ASYMMETRIC_PWM_SLICE_HW, pwm_compareVal);
+        XMC_CCU8_EnableShadowTransfer(CCU8_MODULE_HW, ASYMMETRIC_PWM_SHADOW_TRANSFER_MASK);
 
         #if ENABLE_XMC_DEBUG_PRINT
         if (debug_loop_count == DEBUG_LOOP_COUNT_MAX)
